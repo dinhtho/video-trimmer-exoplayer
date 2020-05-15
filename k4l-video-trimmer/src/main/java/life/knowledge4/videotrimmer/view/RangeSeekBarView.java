@@ -43,13 +43,13 @@ public class RangeSeekBarView extends View {
 
     private static final String TAG = RangeSeekBarView.class.getSimpleName();
 
-    private int mHeightTimeLine;
     private List<Thumb> mThumbs;
     private List<OnRangeSeekBarListener> mListeners;
     private float mMaxWidth;
     private float mThumbWidth;
     private float mThumbHeight;
     private int mViewWidth;
+    private int mHeightWidth;
     private float mPixelRangeMin;
     private float mPixelRangeMax;
     private float mScaleRangeMax;
@@ -73,7 +73,6 @@ public class RangeSeekBarView extends View {
         mThumbHeight = Thumb.getHeightBitmap(mThumbs);
 
         mScaleRangeMax = 100;
-        mHeightTimeLine = getContext().getResources().getDimensionPixelOffset(R.dimen.frames_video_height);
 
         setFocusable(true);
         setFocusableInTouchMode(true);
@@ -105,10 +104,10 @@ public class RangeSeekBarView extends View {
         int minW = getPaddingLeft() + getPaddingRight() + getSuggestedMinimumWidth();
         mViewWidth = resolveSizeAndState(minW, widthMeasureSpec, 1);
 
-        int minH = getPaddingBottom() + getPaddingTop() + (int) mThumbHeight + mHeightTimeLine;
-        int viewHeight = resolveSizeAndState(minH, heightMeasureSpec, 1);
+        int minH = getPaddingBottom() + getPaddingTop() + (int) mThumbHeight;
+        mHeightWidth = resolveSizeAndState(minH, heightMeasureSpec, 1);
 
-        setMeasuredDimension(mViewWidth, viewHeight);
+        setMeasuredDimension(mViewWidth, mHeightWidth);
 
         mPixelRangeMin = 0;
         mPixelRangeMax = mViewWidth - mThumbWidth;
@@ -315,13 +314,13 @@ public class RangeSeekBarView extends View {
                 if (th.getIndex() == 0) {
                     final float x = th.getPos() + getPaddingLeft();
                     if (x > mPixelRangeMin) {
-                        Rect mRect = new Rect((int) mThumbWidth, 0, (int) (x + mThumbWidth), mHeightTimeLine);
+                        Rect mRect = new Rect((int) mThumbWidth, 0, (int) (x + mThumbWidth), mHeightWidth);
                         canvas.drawRect(mRect, mShadow);
                     }
                 } else {
                     final float x = th.getPos() - getPaddingRight();
                     if (x < mPixelRangeMax) {
-                        Rect mRect = new Rect((int) x, 0, (int) (mViewWidth - mThumbWidth), mHeightTimeLine);
+                        Rect mRect = new Rect((int) x, 0, (int) (mViewWidth - mThumbWidth), mHeightWidth);
                         canvas.drawRect(mRect, mShadow);
                     }
                 }
@@ -334,9 +333,9 @@ public class RangeSeekBarView extends View {
         if (!mThumbs.isEmpty()) {
             for (Thumb th : mThumbs) {
                 if (th.getIndex() == 0) {
-                    canvas.drawBitmap(th.getBitmap(), th.getPos() + getPaddingLeft(), getPaddingTop() + mHeightTimeLine, null);
+                    canvas.drawBitmap(th.getBitmap(), th.getPos() + getPaddingLeft(), getPaddingTop() , null);
                 } else {
-                    canvas.drawBitmap(th.getBitmap(), th.getPos() - getPaddingRight(), getPaddingTop() + mHeightTimeLine, null);
+                    canvas.drawBitmap(th.getBitmap(), th.getPos() - getPaddingRight(), getPaddingTop() , null);
                 }
             }
         }
