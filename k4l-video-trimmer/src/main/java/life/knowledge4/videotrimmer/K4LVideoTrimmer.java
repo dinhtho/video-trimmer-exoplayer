@@ -398,8 +398,8 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
         mHolderTopView.setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                int currentThumb = mRangeSeekBarView.getClosestThumb(motionEvent.getX());
-                if (currentThumb == -1) {
+                mRangeSeekBarView.currentThumb = mRangeSeekBarView.getClosestThumb(motionEvent.getX());
+                if ( mRangeSeekBarView.currentThumb == -1) {
                     return mRangeSeekBarView.touchOutsideRange(motionEvent.getX());
                 } else {
                     mRangeSeekBarView.dispatchTouchEvent(motionEvent);

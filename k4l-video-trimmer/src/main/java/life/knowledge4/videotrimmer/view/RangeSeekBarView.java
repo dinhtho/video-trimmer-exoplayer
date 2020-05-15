@@ -134,7 +134,7 @@ public class RangeSeekBarView extends View {
         drawThumbs(canvas);
     }
 
-    private int currentThumb = 0;
+    public int currentThumb = 0;
 
     @Override
     public boolean onTouchEvent(@NonNull MotionEvent ev) {
