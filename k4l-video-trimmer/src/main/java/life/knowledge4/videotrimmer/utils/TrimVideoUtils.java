@@ -26,11 +26,11 @@ package life.knowledge4.videotrimmer.utils;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +56,7 @@ public class TrimVideoUtils {
         loadFFMpegBinary();
     }
 
-    public void startTrim(@NonNull File src, @NonNull String dst, long startMs, long endMs,  OnTrimVideoListener callback) throws IOException {
+    public void startTrim(@NonNull File src, @NonNull String dst, long startMs, long endMs, OnTrimVideoListener callback) throws IOException {
         this.callback = callback ;
 
         if(ffmpeg==null){
