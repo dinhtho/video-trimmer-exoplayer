@@ -30,6 +30,7 @@ import android.graphics.Rect;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -106,7 +107,7 @@ public class RangeSeekBarView extends View {
         mViewWidth = resolveSizeAndState(minW, widthMeasureSpec, 1);
 
         int minH = getPaddingBottom() + getPaddingTop() + (int) mThumbHeight;
-        mHeightWidth = resolveSizeAndState(minH, heightMeasureSpec, 1);
+        mHeightWidth = getContext().getResources().getDimensionPixelOffset(R.dimen.frames_video_height);
 
         setMeasuredDimension(mViewWidth, mHeightWidth);
 
@@ -168,6 +169,9 @@ public class RangeSeekBarView extends View {
             }
 
             case MotionEvent.ACTION_MOVE: {
+                if (currentThumb == -1) {
+                    return false;
+                }
                 mThumb = mThumbs.get(currentThumb);
                 mThumb2 = mThumbs.get(currentThumb == 0 ? 1 : 0);
                 // Calculate the distance moved
@@ -294,18 +298,26 @@ public class RangeSeekBarView extends View {
         invalidate();
     }
 
-    private int getClosestThumb(float coordinate) {
+    public int getClosestThumb(float coordinate) {
         int closest = -1;
         if (!mThumbs.isEmpty()) {
+            int padding = 20;
             for (int i = 0; i < mThumbs.size(); i++) {
                 // Find thumb closest to x coordinate
                 final float tcoordinate = mThumbs.get(i).getPos() + mThumbWidth;
-                if (coordinate >= mThumbs.get(i).getPos() && coordinate <= tcoordinate) {
+                if (coordinate >= mThumbs.get(i).getPos() - padding && coordinate <= tcoordinate + padding) {
                     closest = mThumbs.get(i).getIndex();
                 }
             }
         }
         return closest;
+    }
+
+    public boolean touchOutsideRange(float coordinate) {
+        if (mThumbs.size() >= 2) {
+            return coordinate < mThumbs.get(0).getPos() || coordinate > mThumbs.get(1).getPos();
+        }
+        return false;
     }
 
     private void drawShadow(@NonNull Canvas canvas) {
@@ -315,13 +327,13 @@ public class RangeSeekBarView extends View {
                 if (th.getIndex() == 0) {
                     final float x = th.getPos() + getPaddingLeft();
                     if (x > mPixelRangeMin) {
-                        Rect mRect = new Rect((int) mThumbWidth, 0, (int) (x + mThumbWidth), mHeightWidth);
+                        Rect mRect = new Rect(0, 0, (int) (x + mThumbWidth), mHeightWidth);
                         canvas.drawRect(mRect, mShadow);
                     }
                 } else {
                     final float x = th.getPos() - getPaddingRight();
                     if (x < mPixelRangeMax) {
-                        Rect mRect = new Rect((int) x, 0, (int) (mViewWidth - mThumbWidth), mHeightWidth);
+                        Rect mRect = new Rect((int) x, 0, (int) (mViewWidth), mHeightWidth);
                         canvas.drawRect(mRect, mShadow);
                     }
                 }
@@ -334,9 +346,9 @@ public class RangeSeekBarView extends View {
         if (!mThumbs.isEmpty()) {
             for (Thumb th : mThumbs) {
                 if (th.getIndex() == 0) {
-                    canvas.drawBitmap(th.getBitmap(), th.getPos() + getPaddingLeft(), getPaddingTop() , null);
+                    canvas.drawBitmap(th.getBitmap(), th.getPos() + getPaddingLeft(), getPaddingTop(), null);
                 } else {
-                    canvas.drawBitmap(th.getBitmap(), th.getPos() - getPaddingRight(), getPaddingTop() , null);
+                    canvas.drawBitmap(th.getBitmap(), th.getPos() - getPaddingRight(), getPaddingTop(), null);
                 }
             }
         }

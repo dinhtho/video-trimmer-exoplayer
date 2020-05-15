@@ -22,6 +22,7 @@ import android.widget.TextView;
 import android.widget.VideoView;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -75,7 +76,7 @@ import static life.knowledge4.videotrimmer.utils.TrimVideoUtils.stringForTime;
 
 public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventListener {
 
-    private static final String TAG = K4LVideoTrimmer.class.getSimpleName()+"TAG";
+    private static final String TAG = K4LVideoTrimmer.class.getSimpleName() + "TAG";
     private static final int MIN_TIME_FRAME = 1000;
     private static final int SHOW_PROGRESS = 2;
 
@@ -90,6 +91,7 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
     private TimeLineView mTimeLineView;
 
     private ProgressBarView mVideoProgressIndicator;
+    private ProgressBarView mVideoProgressIndicator2;
     private Uri mSrc;
     private String mFinalPath;
 
@@ -110,7 +112,7 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
     private long mOriginSizeFile;
     private boolean mResetSeekBar = true;
 
-    private TrimVideoUtils trimVideoUtils ;
+    private TrimVideoUtils trimVideoUtils;
 
     private final MessageHandler mMessageHandler = new MessageHandler(this);
 
@@ -124,15 +126,15 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
     }
 
 
-
     private void init(Context context) {
 
-        trimVideoUtils = new TrimVideoUtils(context) ;
+        trimVideoUtils = new TrimVideoUtils(context);
 
         LayoutInflater.from(context).inflate(R.layout.view_time_line, this, true);
 
         mHolderTopView = ((SeekBar) findViewById(R.id.handlerTop));
         mVideoProgressIndicator = ((ProgressBarView) findViewById(R.id.timeVideoView));
+        mVideoProgressIndicator2 = ((ProgressBarView) findViewById(R.id.timeVideoView2));
         mRangeSeekBarView = ((RangeSeekBarView) findViewById(R.id.timeLineBar));
         mLinearVideo = ((RelativeLayout) findViewById(R.id.layout_surface_view));
         mPlayView = ((ImageView) findViewById(R.id.icon_video_play));
@@ -189,13 +191,13 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
         });
     }
 
-    private void setExoPlayerSourceAndPrepare(Uri uri){
+    private void setExoPlayerSourceAndPrepare(Uri uri) {
         simpleExoPlayerView.requestFocus();
         DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(getContext(), Util.getUserAgent(getContext(), "ExoPlayerExample"), null);
         //Produces Extractor instances for parsing the media data.
         ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
         MediaSource videoSource = new ExtractorMediaSource(mSrc, dataSourceFactory, extractorsFactory, null, null);
-        setPlayerListener(videoSource) ;
+        setPlayerListener(videoSource);
         player.prepare(videoSource);
     }
 
@@ -213,13 +215,13 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
 
             @Override
             public void onLoadingChanged(boolean isLoading) {
-                Log.v(TAG, "Listener-onLoadingChanged...isLoading:"+isLoading);
+                Log.v(TAG, "Listener-onLoadingChanged...isLoading:" + isLoading);
             }
 
             @Override
             public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
                 Log.v(TAG, "Listener-onPlayerStateChanged..." + playbackState);
-                if(!playWhenReady &&playbackState==STATE_ENDED){
+                if (!playWhenReady && playbackState == STATE_ENDED) {
                     onVideoCompleted();
                 }
             }
@@ -249,11 +251,11 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
 
     }
 
-    private void startResumeExoPlayer(){
+    private void startResumeExoPlayer() {
         player.setPlayWhenReady(true);
     }
 
-    private void pauseExoPlayer(){
+    private void pauseExoPlayer() {
         player.setPlayWhenReady(false);
     }
 
@@ -268,27 +270,33 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
     public void onVideoEnabled(DecoderCounters counters) {
 
     }
+
     @Override
     public void onVideoDecoderInitialized(String decoderName, long initializedTimestampMs, long initializationDurationMs) {
 
     }
+
     @Override
     public void onVideoInputFormatChanged(Format format) {
 
     }
+
     @Override
     public void onDroppedFrames(int count, long elapsedMs) {
 
     }
+
     @Override
     public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
-        Log.v(TAG, "onVideoSizeChanged ["  + " width: " + width + " height: " + height + "]");
-        onVideoPrepared(width,height);
+        Log.v(TAG, "onVideoSizeChanged [" + " width: " + width + " height: " + height + "]");
+        onVideoPrepared(width, height);
     }
+
     @Override
     public void onRenderedFirstFrame(Surface surface) {
 
     }
+
     @Override
     public void onVideoDisabled(DecoderCounters counters) {
 
@@ -314,6 +322,7 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
             }
         });
         mListeners.add(mVideoProgressIndicator);
+        mListeners.add(mVideoProgressIndicator2);
 
         findViewById(R.id.btCancel)
                 .setOnClickListener(
@@ -367,6 +376,7 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
             }
         });
         mRangeSeekBarView.addOnRangeSeekBarListener(mVideoProgressIndicator);
+        mRangeSeekBarView.addOnRangeSeekBarListener(mVideoProgressIndicator2);
 
         mHolderTopView.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -385,6 +395,19 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
             }
         });
 
+        mHolderTopView.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                int currentThumb = mRangeSeekBarView.getClosestThumb(motionEvent.getX());
+                if (currentThumb == -1) {
+                    return mRangeSeekBarView.touchOutsideRange(motionEvent.getX());
+                } else {
+                    mRangeSeekBarView.dispatchTouchEvent(motionEvent);
+                    return true;
+                }
+            }
+        });
+
 
     }
 
@@ -392,17 +415,22 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
         int marge = mRangeSeekBarView.getThumbs().get(0).getWidthBitmap();
         int widthSeek = mHolderTopView.getThumb().getMinimumWidth() / 2;
 
-        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) mHolderTopView.getLayoutParams();
-        lp.setMargins(marge - widthSeek, 0, marge - widthSeek, 0);
+        ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) mHolderTopView.getLayoutParams();
+        int margin = getContext().getResources().getDimensionPixelOffset(R.dimen.progress_video_line_height);
+        lp.setMargins(0, margin, 0, margin);
         mHolderTopView.setLayoutParams(lp);
 
-        lp = (RelativeLayout.LayoutParams) mTimeLineView.getLayoutParams();
+        lp = (ConstraintLayout.LayoutParams) mTimeLineView.getLayoutParams();
         lp.setMargins(marge, 0, marge, 0);
         mTimeLineView.setLayoutParams(lp);
 
-        lp = (RelativeLayout.LayoutParams) mVideoProgressIndicator.getLayoutParams();
+        lp = (ConstraintLayout.LayoutParams) mVideoProgressIndicator.getLayoutParams();
         lp.setMargins(marge, 0, marge, 0);
         mVideoProgressIndicator.setLayoutParams(lp);
+
+        lp = (ConstraintLayout.LayoutParams) mVideoProgressIndicator2.getLayoutParams();
+        lp.setMargins(marge, 0, marge, 0);
+        mVideoProgressIndicator2.setLayoutParams(lp);
     }
 
     private void onSaveClicked() {
@@ -436,7 +464,7 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
                 trimVideoUtils.startTrim(file, getDestinationPath(), mStartPosition, mEndPosition, mOnTrimVideoListener);
             } catch (IOException e) {
                 e.printStackTrace();
-                if(mOnTrimVideoListener!=null)
+                if (mOnTrimVideoListener != null)
                     mOnTrimVideoListener.onError("Can't Trim Video !");
             }
 
@@ -446,9 +474,9 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
     private void onClickVideoPlayPause() {
         if (isPlayerPlaying()) {
             mPlayView.setVisibility(View.VISIBLE);
-            if(mMessageHandler.hasMessageID(SHOW_PROGRESS)){
+            if (mMessageHandler.hasMessageID(SHOW_PROGRESS)) {
                 mMessageHandler.removeMessages();
-                Log.d("SHOW_PROGRESS","remove: 2") ;
+                Log.d("SHOW_PROGRESS", "remove: 2");
             }
             pauseExoPlayer();
         } else {
@@ -458,8 +486,8 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
                 mResetSeekBar = false;
                 player.seekTo(mStartPosition);
             }
-            if(!mMessageHandler.hasMessageID(SHOW_PROGRESS)){
-                Log.d("SHOW_PROGRESS","send ---->") ;
+            if (!mMessageHandler.hasMessageID(SHOW_PROGRESS)) {
+                Log.d("SHOW_PROGRESS", "send ---->");
                 mMessageHandler.sendEmptyMessage(SHOW_PROGRESS);
                 mMessageHandler.setMessageID(SHOW_PROGRESS);
             }
@@ -500,9 +528,9 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
     }
 
     private void onPlayerIndicatorSeekStart() {
-        if(mMessageHandler.hasMessageID(SHOW_PROGRESS)){
+        if (mMessageHandler.hasMessageID(SHOW_PROGRESS)) {
             mMessageHandler.removeMessages();
-            Log.d("SHOW_PROGRESS","remove: 3") ;
+            Log.d("SHOW_PROGRESS", "remove: 3");
         }
         pauseExoPlayer();
         mPlayView.setVisibility(View.VISIBLE);
@@ -510,9 +538,9 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
     }
 
     private void onPlayerIndicatorSeekStop(@NonNull SeekBar seekBar) {
-        if(mMessageHandler.hasMessageID(SHOW_PROGRESS)){
+        if (mMessageHandler.hasMessageID(SHOW_PROGRESS)) {
             mMessageHandler.removeMessages();
-            Log.d("SHOW_PROGRESS","remove: 4") ;
+            Log.d("SHOW_PROGRESS", "remove: 4");
         }
         pauseExoPlayer();
         mPlayView.setVisibility(View.VISIBLE);
@@ -605,9 +633,9 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
     }
 
     private void onStopSeekThumbs() {
-        if(mMessageHandler.hasMessageID(SHOW_PROGRESS)){
+        if (mMessageHandler.hasMessageID(SHOW_PROGRESS)) {
             mMessageHandler.removeMessages();
-            Log.d("SHOW_PROGRESS","remove: 1") ;
+            Log.d("SHOW_PROGRESS", "remove: 1");
         }
         pauseExoPlayer();
         mPlayView.setVisibility(View.VISIBLE);
@@ -633,15 +661,15 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
 
     private void updateVideoProgress(int time) {
         if (player == null) {
-            Log.d(TAG,"updateVideoProgress: found player null") ;
+            Log.d(TAG, "updateVideoProgress: found player null");
             return;
         }
 
         if (time >= mEndPosition) {
-            Log.d(TAG,"updateVideoProgress: found it larger than mEndPosition") ;
-            if(mMessageHandler.hasMessageID(SHOW_PROGRESS)){
+            Log.d(TAG, "updateVideoProgress: found it larger than mEndPosition");
+            if (mMessageHandler.hasMessageID(SHOW_PROGRESS)) {
                 mMessageHandler.removeMessages();
-                Log.d("SHOW_PROGRESS","remove: 5") ;
+                Log.d("SHOW_PROGRESS", "remove: 5");
             }
             pauseExoPlayer();
             mPlayView.setVisibility(View.VISIBLE);
@@ -651,12 +679,11 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
 
         if (mHolderTopView != null) {
             setProgressBarPosition(time);
-        }
-        else {
-            Log.d(TAG,"updateVideoProgress: found mHolderTopView null") ;
+        } else {
+            Log.d(TAG, "updateVideoProgress: found mHolderTopView null");
         }
 
-        Log.d(TAG,"updateVideoProgress: working") ;
+        Log.d(TAG, "updateVideoProgress: working");
         setTimeVideo(time);
     }
 
@@ -755,11 +782,12 @@ public class K4LVideoTrimmer extends FrameLayout implements VideoRendererEventLi
         private int messageID = -1;
 
         boolean hasMessageID(int id) {
-            return messageID==id;
+            return messageID == id;
         }
-        void removeMessages(){
+
+        void removeMessages() {
             super.removeMessages(getMessageID());
-            messageID = -1 ;
+            messageID = -1;
         }
 
         void setMessageID(int messageID) {
